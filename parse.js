@@ -1,10 +1,9 @@
 
 var PARSERS = require('./parsers');
 
-var RE_COMMENT_START = /^\s*\/\*\*\s*$/m;
-var RE_COMMENT_LINE  = /^\s*\*(?:\s(\s*)|$)/m;
-var RE_COMMENT_END   = /^\s*\*\/\s*$/m;
-var RE_COMMENT_1LINE = /^\s*\/\*\*\s*(.*)\s*\*\/\s*$/;
+var MARKER_START = '/**';
+var MARKER_START_SKIP = '/***';
+var MARKER_END   = '*/';
 
 /* ------- util functions ------- */
 
@@ -171,7 +170,8 @@ function parse_block(source, opts) {
  * Produces `extract` function with internal state initialized
  */
 function mkextract(opts) {
-  var chunk = null;
+  var chunk  = null;
+  var indent = 0;
   var number = 0;
 
   opts = merge({}, {
@@ -186,48 +186,39 @@ function mkextract(opts) {
   }, opts || {});
 
   /**
-   * Cumulatively reading lines until they make one comment block
-   * Returns block object or null.
+   * Read lines until they make a block
+   * Return parsed block once fullfilled or null otherwise
    */
   return function extract(line) {
 
-    // if oneliner
-    // then parse it immediately
-    if (line.match(RE_COMMENT_1LINE)) {
-      return parse_block([{
-        source: line.replace(RE_COMMENT_1LINE, '$1'), 
-        number: number}], opts);
+    var result   = null;
+    var startPos = line.indexOf(MARKER_START);
+    var endPos   = line.indexOf(MARKER_END);
+
+    // if open marker detected and it's not skip one
+    if (startPos !== -1 && line.indexOf(MARKER_START_SKIP) !== startPos) {
+      chunk  = [];
+      indent = startPos + MARKER_START.length;
     }
-
-    number += 1;
-
-    // if start of comment
-    // then init the chunk
-    if (line.match(RE_COMMENT_START)) {
-      chunk = [{source: line.replace(RE_COMMENT_START, ''), number: number - 1}];
-      return null;
-    }
-
-    // if comment line and chunk started
-    // then append
-    if (chunk && line.match(RE_COMMENT_LINE)) {
-      chunk.push({
-        number: number - 1,
-        source: line.replace(RE_COMMENT_LINE, opts.trim ? '' : '$1')
+    
+    // if we are on middle of comment block
+    if (chunk) {
+      // slice the line until end or until closing marker start
+      chunk = chunk.concat({
+        number : number,
+        source : line.slice(indent, endPos === -1 ? line.length : endPos)
       });
-      return null;
-    }
 
-    // if comment end and chunk started
-    // then parse the chunk and push
-    if (chunk && line.match(RE_COMMENT_END)) {
-      chunk.push({source: line.replace(RE_COMMENT_END, ''), number: number - 1});
-      return parse_block(chunk, opts);
+      // finalize block if end marker detected
+      if (endPos !== -1) {
+        result = parse_block(chunk, opts);
+        chunk  = null;
+        indent = 0;
+      }
     }
-
-    // if non-comment line
-    // then reset the chunk
-    chunk = null;
+    
+    number += 1;
+    return result;
   };
 }
 

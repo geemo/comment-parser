@@ -1,28 +1,12 @@
 var fs = require('fs');
 var expect = require('chai').expect;
 var parse = require('../index');
+var parse = require('./parse');
 
 describe('Comment string parsing', function() {
 
-  /**
-   * Source lines numeration:
-   *
-   * 0 function() {
-   * 1  // source with comments
-   * 2 }
-   * 
-   */
-
-  function parsed(func, opts) {
-    var str = func.toString();
-    return parse(str.slice(
-      str.indexOf('{') + 1,
-      str.lastIndexOf('}')
-    ), opts);
-  }
-
   it('should parse doc block with description', function() {
-    expect(parsed(function(){
+    expect(parse(function(){
       /**
        * Description
        */
@@ -36,7 +20,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should skip surrounding empty lines while preserving line numbers', function() {
-    expect(parsed(function(){
+    expect(parse(function(){
       /**
        *
        * 
@@ -57,7 +41,7 @@ describe('Comment string parsing', function() {
 
   it('should skip empty blocks', function() {
 
-    expect(parsed(function(){
+    expect(parse(function(){
       /**
        * 
        */
@@ -67,7 +51,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse multiple doc blocks', function() {
-    var p = parsed(function(){
+    var p = parse(function(){
       /**
        * Description first line
        */
@@ -100,7 +84,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse one line block', function() {
-    expect(parsed(function(){
+    expect(parse(function(){
       /** Description */
       var a;
     })[0])
@@ -113,7 +97,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should skip `/* */` comments', function() {
-    expect(parsed(function(){
+    expect(parse(function(){
       /*
        *
        */
@@ -123,8 +107,8 @@ describe('Comment string parsing', function() {
   });
 
   it('should skip `/*** */` comments', function() {
-    expect(parsed(function(){
-      /*
+    expect(parse(function(){
+      /***
        *
        */
       var a;
@@ -133,7 +117,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should preserve empty lines and indentation with `opts.trim = false`', function() {
-    expect(parsed(function(){
+    expect(parse(function(){
       /**
        *
        * 
@@ -155,7 +139,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse one line block with tag', function() {
-    expect(parsed(function(){
+    expect(parse(function(){
       /** @tag */
       var a;
     })[0])
@@ -176,7 +160,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse `@tag`', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * 
          * @my-tag
@@ -200,7 +184,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse `@tag {my.type}`', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * @my-tag {my.type}
          */
@@ -223,7 +207,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse tag with name only `@tag name`', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * @my-tag name
          */
@@ -245,7 +229,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse tag with type and name `@tag {my.type} name`', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * @my-tag {my.type} name
          */
@@ -267,7 +251,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse tag with type, name and description `@tag {my.type} name description`', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * @my-tag {my.type} name description
          */
@@ -289,7 +273,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse tag with multiline description', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * @my-tag {my.type} name description line 1
          * description line 2
@@ -313,7 +297,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse tag with type and optional name `@tag {my.type} [name]`', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * @my-tag {my.type} [name]
          */
@@ -335,7 +319,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse tag with type and optional name with default value `@tag {my.type} [name=value]`', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * @my-tag {my.type} [name=value]
          */
@@ -358,7 +342,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should tolerate default value with whitespces `@tag {my.type} [name=John Doe]`', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * @my-tag {my.type} [name=John Doe]
          */
@@ -381,7 +365,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should tolerate quoted default value `@tag [name="yay!"]`', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * @tag {t} [name="yay!"]
          */
@@ -404,7 +388,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should keep value as is if quotes are mismatched `@tag [name="yay\']`', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * @tag {t} [name="yay!'] desc
          */
@@ -427,7 +411,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse rest names `@tag ...name desc`', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * @tag {t} ...name desc
          */
@@ -449,7 +433,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse optional rest names `@tag [...name] desc`', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * @tag {t} [...name] desc
          */
@@ -471,7 +455,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse multiple tags', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * Description
          * @my-tag1
@@ -503,7 +487,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse nested tags', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * Description
          * @my-tag name
@@ -546,7 +530,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should parse complex types `@tag {{a: type}} name`', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * @my-tag {{a: number}} name
          */
@@ -568,7 +552,7 @@ describe('Comment string parsing', function() {
   });
 
   it('should gracefully fail on syntax errors `@tag {{a: type} name`', function() {
-      expect(parsed(function(){
+      expect(parse(function(){
         /**
          * @my-tag {{a: number} name
          */
