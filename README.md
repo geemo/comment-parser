@@ -76,14 +76,14 @@ Below are examples of acceptable comment formats
  
 /**
    No *s on middle lines is acceptable too
-   which maight be convenient in writing big
+   which might be convenient for writing big
    chunks of text.
    
  * keeping *s on some lines 
  * would work either
    
-   text's left bound is dermined by 
-   opening marker position and white space will be trimmed
+   left bound is dermined by opening marker position 
+   and white space will be trimmed as there was '* '
  */
    
 ```

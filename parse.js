@@ -81,7 +81,7 @@ function parse_block(source, opts) {
   var source_str = source
       .map(function(line) { return trim(line.source); })
       .join('\n');
-
+      
   source_str = trim(source_str);
 
   var start = source[0].number;

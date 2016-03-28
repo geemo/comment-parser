@@ -55,6 +55,56 @@ describe('Comment string parsing', function() {
       });
   });
 
+  it('should parse not starred middle lines with `opts.trim = true`', function() {
+    expect(parse(function(){
+      /**
+         Description text
+         @tag tagname Tag description
+      */
+    }, {
+      trim: true
+    })[0])
+      .eql({
+        description : 'Description text',
+        source      : 'Description text\n@tag tagname Tag description',
+        line        : 1,
+        tags        : [{
+          tag         : 'tag',
+          name        : 'tagname',
+          optional    : false,
+          description : 'Tag description',
+          type        : '',
+          line        : 3,
+          source      : '@tag tagname Tag description'
+        }]
+      });
+  });
+
+  it('should parse not starred middle lines with `opts.trim = false`', function() {
+    expect(parse(function(){
+      /**
+         Description text
+         @tag tagname Tag description
+      */
+    }, {
+      trim: false
+    })[0])
+      .eql({
+        description : '\nDescription text',
+        source      : '\nDescription text\n@tag tagname Tag description\n',
+        line        : 1,
+        tags        : [{
+          tag         : 'tag',
+          name        : 'tagname',
+          optional    : false,
+          description : 'Tag description\n',
+          type        : '',
+          line        : 3,
+          source      : '@tag tagname Tag description\n'
+        }]
+      });
+  });
+
   it('should accept comment close on a non-empty', function() {
     expect(parse(function(){
       /**
